@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <stdlib.h>  /* malloc, free, rand */
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+int gTwolf_fd;
+int init_codec(void)
+{
+	    int status = 0;
+	printf(" VprocHALInit():1!!!!\n");
+    char *file_name = "/sys/class/backlight/rk28_bl/brightness";
+    /*global file handle*/
+	printf(" VprocHALInit():2!!!!\n");
+    gTwolf_fd = -1;
+    gTwolf_fd = open(file_name, O_RDWR);
+	printf(" VprocHALInit():3!!!!\n");
+    if (gTwolf_fd == -1)
+    {
+        perror("unble to open /dev/zl380tw "
+        " make sure the driver is installed in the kernel");
+        return -1;
+    }
+	printf(" VprocHALInit():4!!!!\n");
+    return status;
+}
+
+
+void VprocHALcleanup(void)
+{
+    /*global file handle*/
+    if (gTwolf_fd != -1) 
+       close(gTwolf_fd);
+    gTwolf_fd = -1;
+}
+
+int VprocHALwrite(char *pData,short numBytes)
+{
+    int status = 0;
+    if (gTwolf_fd < 0) {
+        return -1;         
+    } 
+    status = write(gTwolf_fd, pData, numBytes);
+    if (status < 0) {
+        perror("microsemi_spis_tw_write driver");
+    }
+    return status;
+}
+
+
+int main (int argc, char** argv) {
+  
+	int ctlnum = 0;
+	init_codec();
+char data[10];
+	while(1)
+	{
+		printf("进入控制状态，请输入声音大小：");
+		scanf("%d",&ctlnum);
+		sprintf(data,"%d",ctlnum);
+		VprocHALwrite(data,3);
+		//	set_speaker(ctlnum);
+	}
+    printf("Test 3 - completed - PASS\n\n");       
+    printf("\n");
+    VprocTwolfHbiCleanup();
+    
+
+    return 0;
+}
+
